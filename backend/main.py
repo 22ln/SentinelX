@@ -56,15 +56,19 @@ medium_sessions = {}
 fake_tokens = {}
 
 
-def create_token(user_id):
+def create_token(user_id, remember_me=False):
     token = str(uuid4())
-    fake_tokens[token] = user_id
+
+    expiry = datetime.utcnow() + (
+        timedelta(days=7) if remember_me else timedelta(hours=1)
+    )
+
+    fake_tokens[token] = {
+        "user_id": user_id,
+        "expires": expiry
+    }
+
     return token
-
-blocked_tokens = set()
-
-def block_token(token):
-    blocked_tokens.add(token)
 
 # ==============================
 # Auth
@@ -75,17 +79,16 @@ def get_current_user(
 ):
     token = credentials.credentials
 
-    print("Token:", token)
-
-    # ❌ لو التوكن مش موجود
     if token not in fake_tokens:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # 🚨 أهم سطر في السيستم كله
-    if token in blocked_tokens:
-        raise HTTPException(status_code=403, detail="Session terminated due to suspicious activity")
+    token_data = fake_tokens[token]
 
-    user_id = fake_tokens[token]
+    # ⛔ check expiration
+    if datetime.utcnow() > token_data["expires"]:
+        raise HTTPException(status_code=401, detail="Token expired")
+
+    user_id = token_data["user_id"]
 
     user = db.query(User).filter(User.id == user_id).first()
 
@@ -125,13 +128,23 @@ class BehaviorData(BaseModel):
 
 
 class UserCreate(BaseModel):
-    username: str
+    first_name: str
+    last_name: str
     email: EmailStr
     password: str
+    confirm_password: str
+    city: str
+    country: str
+    gender: str   # male / female / other
+    department: str
+    account_type: str   # standard / admin
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    remember_me: bool = False
+
+
 
 
 # ==============================
@@ -533,6 +546,8 @@ def system_dashboard(db: Session = Depends(get_db)):
         "average_risk_score": round(avg_risk,2)
     }
 
+
+
 # ==================================
 # LATEST THREATS
 # ==================================
@@ -590,22 +605,41 @@ def top_risk_users(db: Session = Depends(get_db)):
 # ==============================
 @app.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    print(user.dict())
+
+    # check password confirmation
+    if user.password != user.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
 
     existing_user = db.query(User).filter(
-        (User.username == user.username) |
-        (User.email == user.email)
+        User.email == user.email
     ).first()
 
     if existing_user:
-        return {"error": "User exists"}
+        return {"error": "User already exists"}
 
     hashed_pw = hash_password(user.password)
 
     new_user = User(
-        username=user.username,
+        first_name=user.first_name,
+        last_name=user.last_name,
         email=user.email,
-        hashed_password=hashed_pw
+        hashed_password=hashed_pw,
+        city=user.city,
+        country=user.country,
+        gender=user.gender,
+        department=user.department,
+        account_type=user.account_type
     )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "message": "User registered successfully",
+        "user_id": new_user.id
+    }
 
     db.add(new_user)
     db.commit()
@@ -639,11 +673,10 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                 detail="User is blocked. Try again later."
             )
         else:
-            # ⏱️ فك البلوك بعد الوقت
             del blocked_users[user_id]
 
-    # ✅ لو مش blocked → يكمل عادي
-    token = create_token(db_user.id)
+    # ✅ هنا بس التعديل
+    token = create_token(db_user.id, user.remember_me)
 
     return {
         "access_token": token,
