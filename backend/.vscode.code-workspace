@@ -1,0 +1,25 @@
+{
+	"folders": [
+		{
+			"path": "../.vscode"
+		},
+		{
+			"path": "../__pycache__"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../collectors"
+		},
+		{
+			"path": "../core"
+		},
+		{
+			"path": "../graduation_project"
+		},
+		{
+			"path": "../models"
+		}
+	]
+}

@@ -12,6 +12,7 @@ from collectors.input_collector import collect_input_event
 from collectors.active_collector import collect_active_application
 from collectors.network_collector import collect_network_info
 from collectors.location_collector import collect_location_info
+from typing import Literal
 
 from .database import engine, SessionLocal, Base
 from .models import BehaviorRecord, UserProfile, RiskLog, User
@@ -133,11 +134,12 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     confirm_password: str
-    city: str
-    country: str
+    city: str | None = None
+    country: str | None = None
+    location: str | None = None
     gender: str   # male / female / other
-    department: str
-    account_type: str   # standard / admin
+    department: Literal["Information Technology", "Human Resources", "Finance & Accounting", "Sales & Marketing", "Operations", "Research & Development", "Customer Support", "Legal", "Administration"]
+    account_type: str # Standard User / Administrator
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -367,7 +369,8 @@ async def monitor_csv():
                 risk_score=risk_score,
                 status=status,
                 alerts=", ".join(alerts),
-                location=attack_location
+                city=None,   # أو لو عندك city فعلاً حطيه
+                country=attack_location
             )
 
             db.add(risk_entry)
@@ -605,6 +608,15 @@ def top_risk_users(db: Session = Depends(get_db)):
 # ==============================
 @app.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    city = user.city
+    country = user.country
+
+    if (not city or not country) and user.location:
+        parts = user.location.split(",")
+
+        if len(parts) == 2:
+            city = parts[0].strip()
+            country = parts[1].strip()
     print(user.dict())
 
     # check password confirmation
@@ -625,8 +637,8 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         last_name=user.last_name,
         email=user.email,
         hashed_password=hashed_pw,
-        city=user.city,
-        country=user.country,
+        city=city,
+        country=country,
         gender=user.gender,
         department=user.department,
         account_type=user.account_type
@@ -641,14 +653,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         "user_id": new_user.id
     }
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    return {
-        "message": "User registered",
-        "user_id": new_user.id
-    }
+    
 
 # ==============================
 # Login

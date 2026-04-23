@@ -11,6 +11,7 @@ class BehaviorRecord(Base):
     session_id = Column(String)
     avg_key_interval = Column(Float)
     avg_mouse_speed = Column(Float)
+    city = Column(String)
     country = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
@@ -33,7 +34,8 @@ class RiskLog(Base):
     risk_score = Column(Integer)
     status = Column(String)
     alerts = Column(String)
-    location = Column(String)
+    city = Column(String)
+    country = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 from sqlalchemy import Boolean
