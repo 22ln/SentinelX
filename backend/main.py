@@ -21,7 +21,8 @@ from datetime import timedelta
 
 security = HTTPBearer()
 blocked_users = {}
-blocked_tokens = set()
+active_monitors = {}
+blocked_tokens: set[str] = set()
 
 
 def load_fingerprint():
@@ -56,6 +57,18 @@ medium_sessions = {}
 # ==============================
 fake_tokens = {}
 
+def cleanup_expired_tokens():
+    now = datetime.utcnow()
+    expired_tokens = []
+
+    for token, data in list(fake_tokens.items()):
+        if now > data["expires"]:
+            expired_tokens.append(token)
+
+    for token in expired_tokens:
+        del fake_tokens[token]
+
+
 
 def create_token(user_id, remember_me=False):
     token = str(uuid4())
@@ -65,7 +78,7 @@ def create_token(user_id, remember_me=False):
     )
 
     fake_tokens[token] = {
-        "user_id": user_id,
+        "user_id": str(user_id),
         "expires": expiry
     }
 
@@ -83,13 +96,21 @@ def get_current_user(
     if token not in fake_tokens:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+    cleanup_expired_tokens()
+
+
+    if token in blocked_tokens:
+        raise HTTPException(status_code=401, detail="Token blocked")
+
+    
+
     token_data = fake_tokens[token]
 
     # ⛔ check expiration
     if datetime.utcnow() > token_data["expires"]:
         raise HTTPException(status_code=401, detail="Token expired")
 
-    user_id = token_data["user_id"]
+    user_id = str(token_data["user_id"])
 
     user = db.query(User).filter(User.id == user_id).first()
 
@@ -113,8 +134,6 @@ def verify_password(plain_password, hashed_password):
 # FastAPI App
 # ==============================
 app = FastAPI()
-
-Base.metadata.create_all(bind=engine)
 
 # ==============================
 # Schemas
@@ -188,8 +207,7 @@ def upload_fingerprint(
     avg_mouse = float(data.get("avg_mouse_speed", 0))
     country = data.get("country", "Unknown")
 
-    user = db.query(User).first()
-    user_id = str(user.id)
+    user_id = str(current_user.id)
     # نشوف هل فيه profile موجود
     profile = db.query(UserProfile).filter(
         UserProfile.user_id == user_id
@@ -230,8 +248,8 @@ last_processed_row = 0
 # ==============================
 # CSV MONITOR
 # ==============================
-async def monitor_csv():
-    print("🔥 MONITOR STARTED")
+async def monitor_user(user_id):
+    print(f"🔥 Monitor started for user: {user_id}")
 
     fingerprint = load_fingerprint()
 
@@ -240,14 +258,9 @@ async def monitor_csv():
         return
 
     while True:
-        print("👀 LOOP RUNNING")
-
         db = SessionLocal()
 
         try:
-            # =========================
-            # ✅ Collect LIVE data بدل CSV
-            # =========================
             record = {}
             record.update(collect_input_event())
             record.update(collect_active_application())
@@ -258,23 +271,9 @@ async def monitor_csv():
             avg_mouse_speed = float(record.get("avg_mouse_speed", 0))
             country = record.get("country", "Unknown")
 
-            print("➡️ Processing LIVE:", avg_key_interval, avg_mouse_speed, country)
-
-            user = db.query(User).first()
-            user_id = str(user.id)  # أو تبع session حقيقية
-            # 🚨 لو اليوزر blocked → سيبيه
-            if user_id in blocked_users:
-                if datetime.utcnow() < blocked_users[str(user_id)]:
-                    print("⛔ USER BLOCKED → skipping monitoring")
-                    await asyncio.sleep(5)
-                    continue
-                else:
-                      del blocked_users[str(user_id)]
-
-
-            # =========================
+            # =====================
             # Save Behavior
-            # =========================
+            # =====================
             new_record = BehaviorRecord(
                 id=str(uuid4()),
                 user_id=user_id,
@@ -288,110 +287,67 @@ async def monitor_csv():
             db.add(new_record)
             db.commit()
 
-            # =========================
-            # ✅ Compare with Fingerprint
-            # =========================
+            # =====================
+            # Compare fingerprint
+            # =====================
             risk_score = 0
             alerts = []
-            attack_location = country
 
             fp_key = fingerprint.get("avg_key_interval", 0)
             fp_mouse = fingerprint.get("avg_mouse_speed", 0)
             fp_country = fingerprint.get("country", "Unknown")
 
-            key_diff = 0
-            mouse_diff = 0
-
-            if fp_key != 0:
+            if fp_key:
                 key_diff = abs(avg_key_interval - fp_key) / fp_key
+                if key_diff > 0.3:
+                    risk_score += 30
+                    alerts.append("Keyboard deviation")
 
-            if fp_mouse != 0:
+            if fp_mouse:
                 mouse_diff = abs(avg_mouse_speed - fp_mouse) / fp_mouse
-
-            if key_diff > 0.3:
-                risk_score += 30
-                alerts.append("Keyboard deviation")
-
-            if mouse_diff > 0.3:
-                risk_score += 30
-                alerts.append("Mouse deviation")
+                if mouse_diff > 0.3:
+                    risk_score += 30
+                    alerts.append("Mouse deviation")
 
             if fp_country != "Unknown" and country != fp_country:
                 risk_score += 40
                 alerts.append("Country change")
 
-            # =========================
-            # Risk Decision
-            # =========================
-            if risk_score < 30:
-                status = "Low"
-                action = "Warning"
-
-                print("🟢 LOW RISK")
-
-                message = f"Low risk detected (score={risk_score})"
-
-
-            elif risk_score < 60:
-                status = "Medium"
-                action = "Verification Required"
-
-                print("🟡 MEDIUM RISK")
-
-                medium_sessions[user_id] = {
-                    "risk_score": risk_score,
-                    "status": "pending",
-                    "country": country,
-                    "timestamp": datetime.utcnow()
-                }
-
-            else:
+            # =====================
+            # Save Risk
+            # =====================
+            status = "Low"
+            if risk_score >= 60:
                 status = "High"
-                action = "Blocked"
+            elif risk_score >= 30:
+                status = "Medium"
 
-                print("🚨 HIGH RISK")
-                print(f"🚨 ATTACK DETECTED FROM: {country}")
-
-                # ⛔ 2. Block user لمدة 5 دقايق
-                blocked_users[str(user_id)] = datetime.utcnow() + timedelta(minutes=5)
-
-                # ❌ Block user
-                for t, uid in fake_tokens.items():
-                    if uid == user_id:
-                        blocked_tokens.add(t)
-
-
-            # =========================
-            # Save Risk Log
-            # =========================
             risk_entry = RiskLog(
                 user_id=user_id,
                 risk_score=risk_score,
                 status=status,
                 alerts=", ".join(alerts),
-                city=None,   # أو لو عندك city فعلاً حطيه
-                country=attack_location
+                country=country
             )
 
             db.add(risk_entry)
             db.commit()
 
-            print("💾 Risk saved:", risk_score, status, action)
+            print(f"💾 Saved risk for {user_id}: {risk_score}")
 
         except Exception as e:
-            print("Processing Error:", e)
+            print("Monitor error:", e)
 
         finally:
             db.close()
 
-        await asyncio.sleep(5)  # ⏱️ كل 5 ثواني بدل 30
-
+        await asyncio.sleep(5)
 # ==============================
 # IMPORT + DETECT MANUAL
 # ==============================
 @app.post("/import-latest-record")
 def import_latest_record(
-    current_user: str = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
 
@@ -650,7 +606,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
     return {
         "message": "User registered successfully",
-        "user_id": new_user.id
+        "user_id": str(new_user.id)
     }
 
     
@@ -681,7 +637,11 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             del blocked_users[user_id]
 
     # ✅ هنا بس التعديل
-    token = create_token(db_user.id, user.remember_me)
+    user_id = str(db_user.id)
+    token = create_token(user_id, user.remember_me)
+    if user_id not in active_monitors:
+        active_monitors[user_id] = True
+        asyncio.create_task(monitor_user(user_id))
 
     return {
         "access_token": token,
@@ -692,8 +652,9 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
 # ==============================
 @app.on_event("startup")
 async def start_monitor():
-    print("🚀 Starting background monitor...")
-    asyncio.create_task(monitor_csv())
+    print("🚀 System started")
+    Base.metadata.create_all(bind=engine)
+
 
 @app.get("/medium-alert/{user_id}")
 def medium_alert(user_id: str):
