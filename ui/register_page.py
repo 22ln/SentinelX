@@ -12,42 +12,29 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QApplication,
     QDesktopWidget, QMessageBox, QGraphicsDropShadowEffect,
-<<<<<<< HEAD
-    QFrame, QTextEdit
-=======
     QFrame, QTextEdit, QComboBox
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
 )
+from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QScrollArea
+
 from PyQt5.QtCore import Qt, QTimer, QPoint
 from PyQt5.QtGui import QFont, QPainter, QLinearGradient, QColor, QBrush, QPen
-
+import requests
 
 class NeonBackground(QWidget):
     """Animated neon blue background with floating particles"""
     
-<<<<<<< HEAD
-    def _init_(self, parent=None):
-        super()._init_(parent)
-=======
     def __init__(self, parent=None):
         super().__init__(parent)
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.particles = []
         self.glow_offset = 0
         self.init_particles()
         
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_animation)
-<<<<<<< HEAD
-        self.timer.start(33)  # 30 FPS
-    
-    def init_particles(self):
-        """Create floating particles with neon effect"""
-=======
         self.timer.start(33)
     
     def init_particles(self):
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         for _ in range(60):
             self.particles.append({
                 'x': random.randint(0, 100),
@@ -60,20 +47,12 @@ class NeonBackground(QWidget):
             })
     
     def update_animation(self):
-<<<<<<< HEAD
-        """Update all animations"""
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.glow_offset = (self.glow_offset + 3) % 360
         
         for p in self.particles:
             p['x'] += p['speed_x']
             p['y'] += p['speed_y']
             
-<<<<<<< HEAD
-            # Wrap around
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
             if p['x'] > 100:
                 p['x'] = 0
             elif p['x'] < 0:
@@ -83,10 +62,6 @@ class NeonBackground(QWidget):
             elif p['y'] < 0:
                 p['y'] = 100
             
-<<<<<<< HEAD
-            # Pulse effect
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
             p['alpha'] = int(40 + 30 * math.sin(self.glow_offset * 0.02 * p['pulse']))
         
         self.update()
@@ -95,17 +70,6 @@ class NeonBackground(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
-<<<<<<< HEAD
-        # Neon blue gradient background
-        gradient = QLinearGradient(0, 0, self.width(), self.height())
-        gradient.setColorAt(0, QColor(5, 20, 45))      # Deep dark blue
-        gradient.setColorAt(0.3, QColor(10, 35, 65))   # Neon dark blue
-        gradient.setColorAt(0.6, QColor(15, 45, 85))   # Bright neon blue
-        gradient.setColorAt(1, QColor(8, 25, 55))      # Dark blue
-        painter.fillRect(self.rect(), gradient)
-        
-        # Draw floating light orbs
-=======
         gradient = QLinearGradient(0, 0, self.width(), self.height())
         gradient.setColorAt(0, QColor(5, 20, 45))
         gradient.setColorAt(0.3, QColor(10, 35, 65))
@@ -113,7 +77,6 @@ class NeonBackground(QWidget):
         gradient.setColorAt(1, QColor(8, 25, 55))
         painter.fillRect(self.rect(), gradient)
         
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         for i in range(5):
             alpha = 20 + 15 * math.sin((self.glow_offset + i * 72) * 0.02)
             x = 150 + 200 * math.sin((self.glow_offset + i) * 0.05)
@@ -122,10 +85,6 @@ class NeonBackground(QWidget):
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(int(x), int(y), 80, 80)
         
-<<<<<<< HEAD
-        # Draw particles
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         for p in self.particles:
             color = QColor(0, 150, 255, p['alpha'])
             painter.setBrush(QBrush(color))
@@ -134,13 +93,6 @@ class NeonBackground(QWidget):
             y = int((p['y'] * self.height()) / 100)
             painter.drawEllipse(x, y, p['size'], p['size'])
         
-<<<<<<< HEAD
-        # Draw neon glow lines
-        
-        
-        # Draw corner glows
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         corner_gradient = QLinearGradient(0, 0, 200, 200)
         corner_gradient.setColorAt(0, QColor(0, 150, 255, 30))
         corner_gradient.setColorAt(1, QColor(0, 150, 255, 0))
@@ -151,14 +103,11 @@ class NeonBackground(QWidget):
 class LiveDemoWidget(QWidget):
     """Live security monitoring demo"""
     
-<<<<<<< HEAD
-    def _init_(self, parent=None):
-        super()._init_(parent)
-=======
     def __init__(self, parent=None):
         super().__init__(parent)
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.setMinimumHeight(550)
+        self.setMinimumHeight(42)
+        self.setMaximumHeight(48)
         self.setStyleSheet("""
             QWidget {
                 background: rgba(0, 20, 40, 0.85);
@@ -170,19 +119,11 @@ class LiveDemoWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
         
-<<<<<<< HEAD
-        # Title
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         title = QLabel("🔵 LIVE SECURITY MONITORING")
         title.setFont(QFont("Segoe UI", 12, QFont.Bold))
         title.setStyleSheet("color: #0096FF; letter-spacing: 2px;")
         layout.addWidget(title)
         
-<<<<<<< HEAD
-        # Terminal display
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.terminal = QTextEdit()
         self.terminal.setReadOnly(True)
         self.terminal.setStyleSheet("""
@@ -192,21 +133,13 @@ class LiveDemoWidget(QWidget):
                 border-radius: 12px;
                 color: #00FFAA;
                 font-family: 'Consolas', monospace;
-<<<<<<< HEAD
-                font-size: 13px;
-=======
                 font-size: 18px;
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
                 padding: 15px;
             }
         """)
         self.terminal.setMinimumHeight(250)
         layout.addWidget(self.terminal)
         
-<<<<<<< HEAD
-        # Status bar
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         status_bar = QFrame()
         status_bar.setStyleSheet("""
             QFrame {
@@ -238,10 +171,6 @@ class LiveDemoWidget(QWidget):
         
         layout.addWidget(status_bar)
         
-<<<<<<< HEAD
-        # Demo lines
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.demo_lines = [
             "> INITIALIZING SENTINELX SYSTEM...",
             "> LOADING USER PROFILES... [▓▓▓▓▓▓▓▓▓▓] 100%",
@@ -300,15 +229,14 @@ class LiveDemoWidget(QWidget):
 class ModernInput(QLineEdit):
     """Modern input field"""
     
-<<<<<<< HEAD
-    def _init_(self, placeholder="", parent=None):
-        super()._init_(parent)
-=======
     def __init__(self, placeholder="", parent=None):
         super().__init__(parent)
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.setPlaceholderText(placeholder)
         self.setMinimumHeight(50)
+        self.setMinimumHeight(45)
+        self.setMaximumHeight(55)
+        self.setContentsMargins(0, 0, 0, 0)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.setStyleSheet("""
             QLineEdit {
                 background: rgba(0, 150, 255, 0.05);
@@ -334,13 +262,8 @@ class ModernInput(QLineEdit):
 class ModernButton(QPushButton):
     """Modern button"""
     
-<<<<<<< HEAD
-    def _init_(self, text, parent=None):
-        super()._init_(text, parent)
-=======
     def __init__(self, text, parent=None):
         super().__init__(text, parent)
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.setMinimumHeight(50)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("""
@@ -372,35 +295,34 @@ class ModernButton(QPushButton):
 class RegisterPage(QMainWindow):
     """Main Registration Window"""
     
-<<<<<<< HEAD
-    def _init_(self, login_page=None):
-        super()._init_()
-=======
     def __init__(self, login_page=None):
         super().__init__()
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.setWindowTitle("SentinelX - Create Account")
         self.login_page = login_page
-        self.setMinimumSize(1300, 1000)
+        screen = QDesktopWidget().screenGeometry()
+        self.resize(int(screen.width() * 0.9), int(screen.height() * 0.9))
         
         self.users_db = self.load_users()
         
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        #self.setWindowFlags(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
         
         self.is_maximized = False
         self.normal_geometry = None
         self.drag_pos = None
         
-<<<<<<< HEAD
-        # Neon background
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.central_widget = NeonBackground()
         self.setCentralWidget(self.central_widget)
         
         self.setup_ui()
         self.setup_controls()
+
+        QTimer.singleShot(100, self.fix_focus)
+
+    def fix_focus(self):
+        self.raise_()
+        self.activateWindow()
+        self.first_name_input.setFocus()
     
     def load_users(self):
         if os.path.exists("sentinelx_users.json"):
@@ -414,27 +336,52 @@ class RegisterPage(QMainWindow):
     def save_users(self):
         with open("sentinelx_users.json", 'w') as f:
             json.dump(self.users_db, f, indent=4)
+
+    def handle_register(self):
+        import requests
+
+        data = {
+            "first_name": self.first_name_input.text(),
+            "last_name": self.last_name_input.text(),
+            "email": self.email_input.text(),
+            "password": self.password_input.text(),
+            "confirm_password": self.confirm_input.text(),
+            "city": self.location_input.text().split(",")[0].strip() if "," in self.location_input.text() else self.location_input.text(),
+            "country": self.location_input.text().split(",")[1].strip() if "," in self.location_input.text() else "",
+            "gender": self.selected_gender,
+            "department": self.department_combo.currentText(),
+            "account_type": "standard"
+        }
+
+        try:
+            response = requests.post("http://127.0.0.1:8000/register", json=data)
+
+            print(response.json())
+
+            if response.status_code == 200:
+                QMessageBox.information(self, "Success", "Account created successfully!")
+            else:
+                QMessageBox.warning(self, "Error", response.text)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
     
     def setup_ui(self):
         main_layout = QHBoxLayout(self.central_widget)
-        main_layout.setContentsMargins(50, 40, 50, 40)
-        main_layout.setSpacing(40)
-        
-<<<<<<< HEAD
-        # Left side
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
+
         left_widget = self.create_left_section()
-        main_layout.addWidget(left_widget, 4)
-        
-        # Right side
-=======
-        left_widget = self.create_left_section()
-        main_layout.addWidget(left_widget, 4)
-        
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         right_widget = self.create_form_card()
-        right_widget.setFixedWidth(550)
-        main_layout.addWidget(right_widget, 5)
-    
+
+        # 🔥 حطيهم هنا مباشرة بعد الإنشاء
+        from PyQt5.QtWidgets import QSizePolicy
+
+        left_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        right_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        main_layout.addWidget(left_widget, 3)
+        main_layout.addWidget(right_widget, 3)
     def create_left_section(self):
         widget = QWidget()
         widget.setStyleSheet("background: transparent;")
@@ -443,30 +390,12 @@ class RegisterPage(QMainWindow):
         layout.setSpacing(20)
         layout.setAlignment(Qt.AlignTop)
         
-<<<<<<< HEAD
-        # Logo
-        logo = QLabel("🔵 SENTINELX")
-        logo.setFont(QFont("Segoe UI", 38, QFont.Bold))
-        logo.setStyleSheet("color: #0096FF; letter-spacing: 4px;")
-        logo.setAlignment(Qt.AlignCenter)
-        layout.addWidget(logo)
-        
-        # Welcome text
-        welcome = QLabel("Welcome to SentinelX")
-        welcome.setFont(QFont("Segoe UI", 26, QFont.Bold))
-        welcome.setStyleSheet("color: white;")
-        welcome.setAlignment(Qt.AlignCenter)
-        layout.addWidget(welcome)
-        
-        # Line
-=======
         logo = QLabel("🫆 SENTINELX")
         logo.setFont(QFont("Segoe UI", 38, QFont.Bold))
         logo.setStyleSheet("color: #0096FF; letter-spacing: 4px;")
         logo.setAlignment(Qt.AlignLeft)
         layout.addWidget(logo)
         
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         line = QFrame()
         line.setFixedHeight(2)
         line.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0096FF, stop:1 #00C8FF); border-radius: 1px;")
@@ -474,27 +403,15 @@ class RegisterPage(QMainWindow):
         
         layout.addSpacing(10)
         
-<<<<<<< HEAD
-        # Demo title
-=======
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         demo_title = QLabel(" Detect Insider Threats , protect your Data")
         demo_title.setFont(QFont("Segoe UI", 11, QFont.Bold))
         demo_title.setStyleSheet("color: #0096FF; letter-spacing: 2px;")
         demo_title.setAlignment(Qt.AlignCenter)
         layout.addWidget(demo_title)
         
-<<<<<<< HEAD
-        # Live Demo
         self.live_demo = LiveDemoWidget()
         layout.addWidget(self.live_demo)
         
-        # Stats
-=======
-        self.live_demo = LiveDemoWidget()
-        layout.addWidget(self.live_demo)
-        
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         stats_container = QFrame()
         stats_container.setStyleSheet("""
             QFrame {
@@ -526,24 +443,11 @@ class RegisterPage(QMainWindow):
         
         layout.addStretch()
         
-<<<<<<< HEAD
-        # Badge
-        badge = QFrame()
-        badge.setStyleSheet("""
-            QFrame {
-                background: rgba(0, 150, 255, 0.08);
-                border: 1px solid rgba(0, 150, 255, 0.3);
-                border-radius: 25px;
-            }
-        """)
-       
-=======
         welcome = QLabel("Secure Your Digital Identity")
         welcome.setFont(QFont("Segoe UI", 11, QFont.Bold))
         welcome.setStyleSheet("color: white;")
         welcome.setAlignment(Qt.AlignCenter)
         layout.addWidget(welcome)
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         
         return widget
     
@@ -563,16 +467,10 @@ class RegisterPage(QMainWindow):
         card.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(card)
-<<<<<<< HEAD
-        layout.setContentsMargins(35, 40, 35, 40)
-        layout.setSpacing(15)
-        
-        # Header
-=======
+        layout.setSpacing(22)
         layout.setContentsMargins(35, 35, 35, 40)
-        layout.setSpacing(10)
+        layout.setSpacing(22)
         
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         title = QLabel("  Create Account  ")
         title.setFont(QFont("Segoe UI", 28, QFont.Bold))
         title.setStyleSheet("color: white;")
@@ -583,17 +481,6 @@ class RegisterPage(QMainWindow):
         subtitle.setStyleSheet("color: rgba(255, 255, 255, 0.6);")
         layout.addWidget(subtitle)
         
-<<<<<<< HEAD
-        layout.addSpacing(5)
-        
-        # Form fields
-        self.name_input = ModernInput("Full name")
-        layout.addWidget(self.name_input)
-        
-        self.email_input = ModernInput("Email address")
-        layout.addWidget(self.email_input)
-        
-=======
         layout.addSpacing(30)
         
         # First Name and Last Name in same row
@@ -605,33 +492,34 @@ class RegisterPage(QMainWindow):
         self.first_name_input = ModernInput("First Name")
         self.last_name_input = ModernInput("Last Name")
         
-        name_layout.addWidget(self.first_name_input)
-        name_layout.addWidget(self.last_name_input)
+        name_layout.addWidget(self.first_name_input, 1)
+        name_layout.addWidget(self.last_name_input, 1)
+        name_layout.setSpacing(12)
         layout.addWidget(name_container)
+
+        layout.addSpacing(12)
         
         # Email
         self.email_input = ModernInput("Email address")
         layout.addWidget(self.email_input)
+        layout.addSpacing(12)
         
         # Password
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.password_input = ModernInput("Password")
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password_input)
-        
-<<<<<<< HEAD
-=======
+        layout.addSpacing(12)
+
         # Confirm Password
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         self.confirm_input = ModernInput("Confirm password")
         self.confirm_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.confirm_input)
-        
-<<<<<<< HEAD
-=======
+        layout.addSpacing(12)
+
         # Location
         self.location_input = ModernInput("Location (City, Country)")
         layout.addWidget(self.location_input)
+        layout.addSpacing(15)
         
         # Gender
         gender_label = QLabel("Gender")
@@ -642,7 +530,7 @@ class RegisterPage(QMainWindow):
         gender_container = QWidget()
         gender_layout = QHBoxLayout(gender_container)
         gender_layout.setContentsMargins(0, 0, 0, 0)
-        gender_layout.setSpacing(10)
+        gender_layout.setSpacing(14)
         
         self.male_btn = QPushButton("Male")
         self.male_btn.setCursor(Qt.PointingHandCursor)
@@ -704,7 +592,9 @@ class RegisterPage(QMainWindow):
         layout.addWidget(gender_container)
         
         self.selected_gender = "male"
-        
+
+        layout.addSpacing(15)
+
         # Department
         dept_label = QLabel("Department")
         dept_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
@@ -718,7 +608,7 @@ class RegisterPage(QMainWindow):
                 background: rgba(0, 150, 255, 0.05);
                 border: 1px solid rgba(0, 150, 255, 0.3);
                 border-radius: 14px;
-                padding: 12px 18px;
+                padding: 10px 14px;
                 font-size: 14px;
                 color: white;
                 font-family: 'Segoe UI', sans-serif;
@@ -752,8 +642,9 @@ class RegisterPage(QMainWindow):
         ]
         self.department_combo.addItems(departments)
         layout.addWidget(self.department_combo)
-        
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
+
+        layout.addSpacing(12)
+
         # Role selector
         role_label = QLabel("Select account type")
         role_label.setFont(QFont("Segoe UI", 11, QFont.Bold))
@@ -806,7 +697,7 @@ class RegisterPage(QMainWindow):
         
         self.selected_role = "user"
         
-        layout.addSpacing(5)
+        layout.addSpacing(15)
         
         # Register button
         self.register_btn = ModernButton("Create Account →")
@@ -896,11 +787,22 @@ class RegisterPage(QMainWindow):
         signin_layout.addWidget(signin_text)
         signin_layout.addWidget(self.signin_link)
         layout.addWidget(signin_container)
+
+        self.register_btn = ModernButton("Create Account")
+        self.register_btn.clicked.connect(self.handle_register)
+        layout.addWidget(self.register_btn)
+
+        layout.addStretch(1)
         
-        return card
+
+        scroll = QScrollArea()
+        scroll.setWidget(card)
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("border: none;")
+
+        return scroll
+        
     
-<<<<<<< HEAD
-=======
     def select_gender(self, gender):
         self.selected_gender = gender
         if gender == "male":
@@ -1006,7 +908,6 @@ class RegisterPage(QMainWindow):
                 }
             """)
     
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
     def select_role(self, role):
         self.selected_role = role
         if role == "user":
@@ -1057,15 +958,6 @@ class RegisterPage(QMainWindow):
             """)
     
     def handle_register(self):
-<<<<<<< HEAD
-        name = self.name_input.text().strip()
-        email = self.email_input.text().strip()
-        password = self.password_input.text()
-        confirm = self.confirm_input.text()
-        
-        if not name:
-            QMessageBox.warning(self, "Error", "Please enter your name")
-=======
         first_name = self.first_name_input.text().strip()
         last_name = self.last_name_input.text().strip()
         email = self.email_input.text().strip()
@@ -1074,68 +966,47 @@ class RegisterPage(QMainWindow):
         location = self.location_input.text().strip()
         gender = self.selected_gender
         department = self.department_combo.currentText()
-        
-        if not first_name or not last_name:
-            QMessageBox.warning(self, "Error", "Please enter your first and last name")
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
-            return
-        
-        if not email or '@' not in email:
-            QMessageBox.warning(self, "Error", "Please enter a valid email")
-            return
-        
-        if email in self.users_db:
-            QMessageBox.warning(self, "Error", "Email already registered")
-            return
-        
-        if len(password) < 6:
-            QMessageBox.warning(self, "Error", "Password must be at least 6 characters")
-            return
-        
-        if password != confirm:
-            QMessageBox.warning(self, "Error", "Passwords do not match")
-            return
-        
-<<<<<<< HEAD
-        self.users_db[email] = {
-            "name": name,
-            "password": password,
-            "role": self.selected_role
-=======
-        if not location:
-            QMessageBox.warning(self, "Error", "Please enter your location")
-            return
+
+        parts = [p.strip() for p in location.split(",")]
+
+        city = parts[0] if len(parts) > 0 else ""
+        country = parts[1] if len(parts) > 1 else ""
         
         full_name = f"{first_name} {last_name}"
-        
-        self.users_db[email] = {
+
+        url = "http://127.0.0.1:8000/register"
+
+        data = {
             "first_name": first_name,
             "last_name": last_name,
-            "full_name": full_name,
+            "email": email,
             "password": password,
-            "role": self.selected_role,
-            "location": location,
+            "confirm_password": confirm,
+            "city": location.split(",")[0].strip(),
+            "country": location.split(",")[1].strip() if "," in location else "",
             "gender": gender,
             "department": department,
-            "signature_created": True
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
+            "account_type": self.selected_role
         }
-        self.save_users()
-        
+
+        try:
+            response = requests.post(url, json=data)
+
+            if response.status_code == 200:
+                QMessageBox.information(self, "Success", "Registered successfully 🎉")
+                self.handle_login()
+            else:
+                QMessageBox.warning(self, "Error", response.text)
+
+        except Exception as e:
+            QMessageBox.warning(self, "Error", str(e))
+            return
+
         role_text = "Administrator" if self.selected_role == "admin" else "Standard User"
         
         QMessageBox.information(
             self,
             "Welcome to SentinelX! 🎉",
-<<<<<<< HEAD
-            f"Account created successfully!\n\nName: {name}\nRole: {role_text}"
-        )
-        
-        self.name_input.clear()
-        self.email_input.clear()
-        self.password_input.clear()
-        self.confirm_input.clear()
-=======
             f"Account created successfully!\n\n"
             f"Name: {full_name}\n"
             f"Email: {email}\n"
@@ -1152,7 +1023,6 @@ class RegisterPage(QMainWindow):
         self.password_input.clear()
         self.confirm_input.clear()
         self.location_input.clear()
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
         
         self.handle_login()
     
@@ -1252,11 +1122,7 @@ class RegisterPage(QMainWindow):
         self.update_controls_position()
 
 
-<<<<<<< HEAD
-if __name__ == "_main_":
-=======
 if __name__ == "__main__":
->>>>>>> a2582d3c71e7f17c6c3dd5f953a5cc89f69372b9
     random.seed()
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
@@ -1265,8 +1131,9 @@ if __name__ == "__main__":
     
     screen = QDesktopWidget().screenGeometry()
     x = (screen.width() - 1300) // 2
-    y = (screen.height() - 850) // 2
-    window.setGeometry(x, y, 1300, 850)
+    y = (screen.height() - 1000) // 2
+    window.showMaximized()
     
     window.show()
     sys.exit(app.exec_())
+
