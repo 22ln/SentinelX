@@ -20,6 +20,7 @@ from fastapi import BackgroundTasks
 import smtplib
 from email.mime.text import MIMEText
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+import hashlib
 
 from .database import engine, SessionLocal, Base
 from .models import BehaviorRecord, UserProfile, RiskLog, User
@@ -166,7 +167,6 @@ def hash_password(password: str):
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
-
 
 # ==============================
 # FastAPI App
@@ -1016,7 +1016,7 @@ def verify_otp(data: OTPRequest):
 
     del otp_store[data.user_id]
 
-    user_access[data.user_id] = "full"
+    user_access[data.user_id] = ACTIVE
 
     return {"message": "User verified successfully"}
 
