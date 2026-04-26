@@ -796,6 +796,22 @@ def login(
 
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    profile = db.query(UserProfile).filter(
+        UserProfile.user_id == str(db_user.id)
+        ).first()
+    
+    if not profile:
+        new_profile = UserProfile(
+            user_id=str(db_user.id),
+            avg_key_interval=0,
+            avg_mouse_speed=0,
+            total_samples=0,
+            country=db_user.country if hasattr(db_user, "country") else "Unknown"
+            )
+
+        db.add(new_profile)
+        db.commit()
 
     # 🔒 check if account is frozen
     if db_user.is_frozen:
@@ -834,10 +850,14 @@ def login(
         active_monitors[user_id] = True
         user_states[user_id] = ACTIVE
         background_tasks.add_task(monitor_user, user_id)
+        
 
     return {
         "access_token": token,
-        "token_type": "Bearer"
+        "token_type": "Bearer",
+        "role": db_user.account_type,  # ← Add this line
+        "user_id": str(db_user.id),
+        "first_login": db_user.first_login is not None
     }
 # ==============================
 # START MONITOR
@@ -1059,3 +1079,30 @@ async def send_otp(user_id: str, db: Session = Depends(get_db)):
 
     return {"message": "OTP sent"}
 
+# ==============================
+# user profile endpoint
+# ==============================
+
+@app.get("/user-profile")
+def get_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    profile = db.query(UserProfile).filter(
+        UserProfile.user_id == str(current_user.id)
+    ).first()
+
+    return {
+        "first_name": current_user.first_name,
+        "last_name": current_user.last_name,
+        "email": current_user.email,
+        "department": current_user.department,
+        "account_type": current_user.account_type,
+        "city": current_user.city,
+        "country": current_user.country,
+
+        # behavior data
+        "avg_key_interval": profile.avg_key_interval if profile else 0,
+        "avg_mouse_speed": profile.avg_mouse_speed if profile else 0,
+        "total_samples": profile.total_samples if profile else 0
+    }

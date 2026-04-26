@@ -1,4 +1,5 @@
 # ui/main_window.py
+
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QFrame, QProgressBar, QGridLayout,
@@ -15,6 +16,8 @@ from ui.sidebar import SideBar
 from ui.profile_sidemenu import ProfileSideMenu
 from ui.recent_activity_sidemenu import RecentActivitySideMenu
 from ui.support_sidemenu import SupportSideMenu
+
+from backend.user_dashboard import UserDashboardService
 
 
 class MetricWidget(QWidget):
@@ -183,9 +186,21 @@ class CustomPlotWidget(pg.PlotWidget):
         super().mouseMoveEvent(event)
 
 
-class MainWindow(QMainWindow):
-    def __init__(self):
+class MainWindow(QMainWindow):            
+    def __init__(self, token):
         super().__init__()
+        
+        self.token = token
+        
+        self.dashboard_service = UserDashboardService(self.token)
+        
+        self.profile_menu = ProfileSideMenu(self)
+        self.profile_menu.hide()
+
+        self.user_data = self.dashboard_service.get_profile()
+        if self.user_data:
+            self.profile_menu.set_user_data(self.user_data)
+    
         self.setWindowTitle("SentinelX - Behavioral Threat Detection")
         self.resize(1400, 900)
         self.setStyleSheet("QMainWindow { background: #0B1643; }")
@@ -196,6 +211,7 @@ class MainWindow(QMainWindow):
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 15, 0)
         main_layout.setSpacing(0)
+    
         
         # ========= Sidebar =========
         self.sidebar = SideBar()
@@ -205,15 +221,12 @@ class MainWindow(QMainWindow):
         self.sidebar.support_clicked.connect(self.toggle_support_menu)
         
         # ========= Side Menus =========
-        self.profile_menu = ProfileSideMenu(self)
-        self.profile_menu.hide()
         
         self.activity_menu = RecentActivitySideMenu(self)
         self.activity_menu.hide()
         
         self.support_menu = SupportSideMenu(self)
         self.support_menu.hide()
-        
         # ========= Content Area (بدون سكرول) =========
         self.content_area = QWidget()
         self.content_area.setStyleSheet("background: #0B1643;")
@@ -342,6 +355,7 @@ class MainWindow(QMainWindow):
         # User Profile Section
         user_container = QFrame()
         user_container.setCursor(QCursor(Qt.PointingHandCursor))
+        user_container.mousePressEvent = lambda event: self.toggle_profile_menu()
         user_container.setStyleSheet("""
             QFrame {
                 background: transparent;
@@ -404,32 +418,185 @@ class MainWindow(QMainWindow):
         section_title.setFont(QFont("Segoe UI", 11, QFont.Bold))
         section_title.setStyleSheet("color: rgba(255,255,255,0.6); letter-spacing: 1.5px; margin-top: 5px; margin-bottom: 10px;")
         dashboard_layout.addWidget(section_title)
-       
+        
+        # =========================
+        # SAFE FALLBACK VALUES
+        # =========================
+        typing_speed = "0"
+        mouse_speed = "0"
+        keystroke_rhythm = "0"
+        click_frequency = "0"
+        anomaly_score = "0"
+        
+        app_focus_time = "0"
+        login_time = "N/A"
+        session_length = "0"
+        threats = "0"
+        
+        file_access = "0"
+        network_traffic = "0"
+        error_rate = "0"
+        
+    # =========================
+    # CORE METRICS (REAL DATA)
+    # =========================
+        
+        if hasattr(self, "user_data") and self.user_data:
+            profile = self.user_data or {}            
+            
+        if profile.get("avg_key_interval"):
+            typing_speed = str(round(1 / profile["avg_key_interval"], 2))
+
+        if profile.get("avg_mouse_speed"):
+            mouse_speed = str(round(profile["avg_mouse_speed"], 2))
+
+    # placeholders (you can improve later)
+        keystroke_rhythm = "90"
+        click_frequency = "3.5"
+        anomaly_score = "15"
+        
+
         # ========= Row 1 =========
         row1 = QHBoxLayout()
         row1.setSpacing(18)
-        row1.addWidget(MetricWidget("Typing Speed", "72", "WPM", "Words Per Minute", 85, "+2.3%"))
-        row1.addWidget(MetricWidget("Mouse Speed", "4.2", "px/s", "Pixels/Second", 60, "-0.8%"))
-        row1.addWidget(MetricWidget("Keystroke Rhythm", "92", "%", "Consistency Score", 92, "+1.5%"))
-        row1.addWidget(MetricWidget("Click Frequency", "3.8", "c/m", "Clicks/Minute", 75, "-0.3%"))
+        row1.addWidget(
+            MetricWidget(
+                "Typing Speed",
+                typing_speed,
+                "WPM",
+                "Words Per Minute",
+                85,
+                "+2.3%"
+                )
+            )
+        
+        row1.addWidget(
+            MetricWidget(
+                "Mouse Speed",
+                mouse_speed,
+                "px/s",
+                "Pixels/Second",
+                60,
+                "-0.8%"
+                )
+            )
+        row1.addWidget(
+            MetricWidget(
+                "Keystroke Rhythm",
+                keystroke_rhythm,
+                "%",
+                "Consistency Score",
+                92,
+                "+1.5%"
+                )
+            )
+        
+        row1.addWidget(
+            MetricWidget(
+                "Click Frequency",
+                click_frequency,
+                "c/m",
+                "Clicks/Minute",
+                75,
+                "-0.3%"
+                )
+            )
         dashboard_layout.addLayout(row1)
         
         # ========= Row 2 =========
         row2 = QHBoxLayout()
         row2.setSpacing(18)
-        row2.addWidget(MetricWidget("App Focus Time", "4.2", "hrs", "Hours/Day", 63, "+0.5%"))
-        row2.addWidget(MetricWidget("Login Time", "08:30", "", "Avg. Morning Login", 0, ""))
-        row2.addWidget(MetricWidget("Session Length", "6.5", "hrs", "Hours", 0, ""))
-        row2.addWidget(MetricWidget("Anomaly Score", "15", "%", "Risk Level", 15, "-2.1%"))
+        row2.addWidget(
+            MetricWidget(
+                "App Focus Time",
+                app_focus_time,
+                "hrs",
+                "Hours/Day",
+                63,
+                "+0.5%"
+                )
+            )
+        row2.addWidget(
+            MetricWidget(
+            "Login Time",
+            login_time,
+            "",
+            "Avg. Morning Login",
+            0,
+            ""
+            )
+            )
+        row2.addWidget(
+            MetricWidget(
+            "Session Length",
+            session_length,
+            "hrs",
+            "Hours",
+            0,
+            ""
+            )
+            )
+        row2.addWidget(
+            MetricWidget(
+            "Anomaly Score",
+            anomaly_score,
+            "%",
+            "Risk Level",
+            15,
+            "-2.1%"
+            )
+            )
         dashboard_layout.addLayout(row2)
+        
+        
         
         # ========= Row 3 =========
         row3 = QHBoxLayout()
         row3.setSpacing(18)
-        row3.addWidget(MetricWidget("File Access Rate", "42", "files/h", "Files/Hour", 0, ""))
-        row3.addWidget(MetricWidget("Network Traffic", "2.1", "MB/m", "MB/Minute", 0, ""))
-        row3.addWidget(MetricWidget("Error Rate", "1.2", "%", "System Errors", 1, ""))
-        row3.addWidget(MetricWidget("Threats Detected", "3", "", "Active Alerts", 0, ""))
+
+        row3.addWidget(
+            MetricWidget(
+                "File Access Rate",
+                file_access,
+                "files/h",
+                "Files/Hour",
+                0,
+                ""
+                )
+            )
+
+        row3.addWidget(
+            MetricWidget(
+            "Network Traffic",
+            network_traffic,
+            "MB/m",
+            "MB/Minute",
+            0,
+            ""
+            )
+            )
+
+        row3.addWidget(
+            MetricWidget(
+                "Error Rate",
+                error_rate,
+                "%",
+                "System Errors",
+                1,
+                ""
+                )
+            )
+
+        row3.addWidget(
+            MetricWidget(
+                "Threats Detected",
+                threats,
+                "",
+                "Active Alerts",
+                0,
+                ""
+                )
+            )
         dashboard_layout.addLayout(row3)
 
         # ========= Chart Section =========
@@ -465,6 +632,8 @@ class MainWindow(QMainWindow):
                 self.activity_menu.hide_menu()
             if self.support_menu.isVisible():
                 self.support_menu.hide_menu()
+            data = self.profile_menu.load_user_profile(self.token)
+            self.profile_menu.set_user_data(data)
             self.profile_menu.show_menu()
 
     def toggle_activity_menu(self):
@@ -576,6 +745,6 @@ if __name__ == "__main__":
     from PyQt5.QtWidgets import QApplication
     
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow("dummy_token")
     window.show()
     sys.exit(app.exec_())
